@@ -1,5 +1,6 @@
 const express = require('express')
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express()
@@ -7,7 +8,12 @@ const port = process.env.PORT || 5000;
 
 
 //Middleware
-app.use(cors());
+app.use(cors({
+    origin: [
+        'http://localhost:5173'
+    ],
+    credentials: true
+}));
 app.use(express.json());
 
 
@@ -33,8 +39,32 @@ async function run() {
         const addedFoodsCollection = client.db('allFoodsDB').collection('addedFoods');
         const myAddedCollection = client.db('allFoodsDB').collection('myAddedFoods');
 
-        //user related api
 
+        //auth related api
+        app.post('/jwt', async (req, res) => {
+            const user = req.body;
+            console.log('user token', user);
+            const token = jwt.sign(user, process.env.ACCESS_TOKEN, { expiresIn: '1h' });
+
+            // res.send({ token });
+            res.cookie('token', token, {
+                httpOnly: true,
+                secure: true,
+                sameSite: 'none'
+            })
+                .send({ success: true });
+        })
+
+
+        app.post('/logout', async (req, res) => {
+            const user = req.body;
+            console.log('logging out', user)
+            res.clearCookie('token', { maxAge: 0 }).send({ success: true })
+        })
+
+
+
+        //user related api
         //create user on database
         app.post('/user', async (req, res) => {
             const user = req.body;
