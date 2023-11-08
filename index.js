@@ -1,7 +1,7 @@
 const express = require('express')
 const cors = require('cors');
 require('dotenv').config();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express()
 const port = process.env.PORT || 5000;
 
@@ -30,40 +30,10 @@ async function run() {
 
         const userCollection = client.db('userDB').collection('user');
         const allFoodsCollection = client.db('allFoodsDB').collection('allFoods');
+        const addedFoodsCollection = client.db('allFoodsDB').collection('addedFoods');
+        const myAddedCollection = client.db('allFoodsDB').collection('myAddedFoods');
 
-        // app.post('/register', async (req, res) => {
-        //     try {
-        //         const { email, password, name, photoURL } = req.body;
-        //         const user = {
-        //             email,
-        //             password,
-        //             name,
-        //             photoURL,
-        //         };
-
-        //         const result = await userCollection.insertOne(user);
-
-        //         res.status(201).json({ message: 'User registered successfully', userId: result.insertedId });
-        //     } catch (error) {
-        //         console.error("Error registering user:", error);
-        //         res.status(500).json({ error: 'Internal Server Error' });
-        //     }
-        // });
-
-
-        // app.post('/register', async (req, res) => {
-        //     const requestBody = req.body;
-        //     console.log(requestBody);
-        //     const { email, password, name, photoURL } = requestBody;
-        //     const user = {
-        //         email,
-        //         password,
-        //         name,
-        //         photoURL,
-        //     };
-        //     const result = await userCollection.insertOne(user);
-        //     res.send(result);
-        // });
+        //user related api
 
         //create user on database
         app.post('/user', async (req, res) => {
@@ -79,6 +49,45 @@ async function run() {
             const users = await cursor.toArray();
             res.send(users);
         })
+
+        //all foods related api
+
+        app.get('/allFoods', async (req, res) => {
+            const cursor = allFoodsCollection.find();
+            const result = await cursor.toArray();
+            res.send(result);
+        })
+
+
+        app.get('/allFoods/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+
+            const options = {
+                projection: { food_name: 1, image_url: 1, category: 1, quantity: 1, price: 1, food_origin: 1, short_description: 1 },
+            };
+            const result = await allFoodsCollection.findOne(query, options);
+            res.send(result);
+        })
+
+
+        // orders related api
+
+        app.post('/addedFoods', async (req, res) => {
+            const addedFoods = req.body;
+            console.log(addedFoods);
+            const result = await addedFoodsCollection.insertOne(addedFoods);
+            res.send(result);
+        })
+
+        //myAdded foods
+        app.post('/myFoods', async (req, res) => {
+            const myFoods = req.body;
+            console.log(myFoods);
+            const result = await allFoodsCollection.insertOne(myFoods);
+            res.send(result);
+        })
+
 
 
         // Send a ping to confirm a successful connection
