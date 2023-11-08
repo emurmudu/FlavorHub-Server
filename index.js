@@ -72,7 +72,7 @@ async function run() {
 
 
         // orders related api
-
+        // purchased foods added on addedFoodsCollection
         app.post('/addedFoods', async (req, res) => {
             const addedFoods = req.body;
             console.log(addedFoods);
@@ -80,7 +80,80 @@ async function run() {
             res.send(result);
         })
 
-        //myAdded foods
+        //delete operation from ordered food
+        app.delete('/addedFoods/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await addedFoodsCollection.deleteOne(query);
+            res.send(result);
+        })
+
+
+        app.get('/addedFoods', async (req, res) => {
+            console.log(req.query.email);
+            let query = {};
+            if (req.query.email) {
+                query = { email: req.query.email }
+            }
+            const result = await addedFoodsCollection.find(query).toArray();
+            res.send(result);
+        })
+
+
+        // show uploaded foods from main database by logged-in user
+        app.get('/uploadedFoods', async (req, res) => {
+            console.log(req.query.email);
+            let query = {};
+            if (req.query.email) {
+                query = { email: req.query.email }
+            }
+            const result = await allFoodsCollection.find(query).toArray();
+            res.send(result);
+        })
+
+        //get for update uploaded foods by logged-in user
+        app.get('/uploadedFoods/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await allFoodsCollection.findOne(query);
+            res.send(result);
+
+            // update uploaded food
+            app.put('/uploadedFoods/:id', async (req, res) => {
+                const id = req.params.id;
+                const filter = { _id: new ObjectId(id) };
+                const options = { upsert: true };
+                const updateFood = req.body;
+                const food = {
+                    $set: {
+                        name: updateFood.name,
+                        email: updateFood.email,
+                        food_name: updateFood.food_name,
+                        image_url: updateFood.image_url,
+                        category: updateFood.category,
+                        quantity: updateFood.quantity,
+                        price: updateFood.price,
+                        food_origin: updateFood.food_origin,
+                        short_description: updateFood.short_description
+                    }
+                }
+                const result = await allFoodsCollection.updateOne(filter, food, options);
+                res.send(result);
+            })
+
+            // console.log(req.query.email);
+            // let query = {};
+            // if (req.query.email) {
+            //     query = { email: req.query.email }
+            // }
+            // const result = await allFoodsCollection.find(query).toArray();
+            // res.send(result);
+        })
+
+
+
+
+        //myAdded foods to main database/allFoodsCollection
         app.post('/myFoods', async (req, res) => {
             const myFoods = req.body;
             console.log(myFoods);
