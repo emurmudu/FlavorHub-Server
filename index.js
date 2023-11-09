@@ -120,11 +120,76 @@ async function run() {
 
         //all foods related api
 
+        // app.get('/allFoods', async (req, res) => {
+        //     const cursor = allFoodsCollection.find();
+        //     const result = await cursor.toArray();
+        //     res.send(result);
+        // })
+
+
+        // app.get('/allFoods', async (req, res) => {
+        //     const page = parseInt(req.query.page) || 1;
+        //     const itemsPerPage = 9;
+
+        //     const skip = (page - 1) * itemsPerPage;
+        //     const cursor = allFoodsCollection.find().skip(skip).limit(itemsPerPage);
+
+        //     try {
+        //         const result = await cursor.toArray();
+        //         res.send(result);
+        //     } catch (error) {
+        //         console.error('Error fetching foods:', error.message);
+        //         res.status(500).json({ error: 'Internal Server Error' });
+        //     }
+        // });
+
+        // app.get('/allFoods', async (req, res) => {
+        //     const page = parseInt(req.query.page) || 1;
+        //     const itemsPerPage = 9;
+
+        //     const totalItems = await allFoodsCollection.countDocuments();
+        //     const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+        //     const skip = (page - 1) * itemsPerPage;
+        //     const cursor = allFoodsCollection.find().skip(skip).limit(itemsPerPage);
+
+        //     try {
+        //         const result = await cursor.toArray();
+        //         res.send({ totalPages, currentPage: page, data: result });
+        //     } catch (error) {
+        //         console.error('Error fetching foods:', error.message);
+        //         res.status(500).json({ error: 'Internal Server Error' });
+        //     }
+        // });
+
+
+
         app.get('/allFoods', async (req, res) => {
-            const cursor = allFoodsCollection.find();
-            const result = await cursor.toArray();
-            res.send(result);
-        })
+            const page = parseInt(req.query.page) || 1;
+            const itemsPerPage = 9;
+            const searchTerm = req.query.search || ''; // Extract search term from query parameters
+
+            const totalItems = await allFoodsCollection.countDocuments({
+                food_name: { $regex: new RegExp(searchTerm, 'i') }, // Case-insensitive search
+            });
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+            const skip = (page - 1) * itemsPerPage;
+            const cursor = allFoodsCollection
+                .find({ food_name: { $regex: new RegExp(searchTerm, 'i') } }) // Filter by food name
+                .skip(skip)
+                .limit(itemsPerPage);
+
+            try {
+                const result = await cursor.toArray();
+                res.send({ totalPages, currentPage: page, data: result });
+            } catch (error) {
+                console.error('Error fetching foods:', error.message);
+                res.status(500).json({ error: 'Internal Server Error' });
+            }
+        });
+
+
 
 
         app.get('/allFoods/:id', async (req, res) => {
