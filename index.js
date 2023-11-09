@@ -12,7 +12,9 @@ const port = process.env.PORT || 5000;
 //Middleware
 app.use(cors({
     origin: [
-        'http://localhost:5173'
+        // 'http://localhost:5173',
+        'https://assignment-11-client-73bc9.web.app',
+        'https://assignment-11-client-73bc9.firebaseapp.com'
     ],
     credentials: true
 }));
@@ -52,19 +54,6 @@ const client = new MongoClient(uri, {
         deprecationErrors: true,
     }
 });
-
-
-// Define the schema outside the run function
-// const addedFoodsSchema = new mongoose.Schema({
-//     food_name: String,
-//     image_url: String,
-//     category: String,
-//     price: Number,
-//     count: { type: Number, default: 0 },
-// });
-
-
-
 
 
 async function run() {
@@ -120,63 +109,19 @@ async function run() {
 
         //all foods related api
 
-        // app.get('/allFoods', async (req, res) => {
-        //     const cursor = allFoodsCollection.find();
-        //     const result = await cursor.toArray();
-        //     res.send(result);
-        // })
-
-
-        // app.get('/allFoods', async (req, res) => {
-        //     const page = parseInt(req.query.page) || 1;
-        //     const itemsPerPage = 9;
-
-        //     const skip = (page - 1) * itemsPerPage;
-        //     const cursor = allFoodsCollection.find().skip(skip).limit(itemsPerPage);
-
-        //     try {
-        //         const result = await cursor.toArray();
-        //         res.send(result);
-        //     } catch (error) {
-        //         console.error('Error fetching foods:', error.message);
-        //         res.status(500).json({ error: 'Internal Server Error' });
-        //     }
-        // });
-
-        // app.get('/allFoods', async (req, res) => {
-        //     const page = parseInt(req.query.page) || 1;
-        //     const itemsPerPage = 9;
-
-        //     const totalItems = await allFoodsCollection.countDocuments();
-        //     const totalPages = Math.ceil(totalItems / itemsPerPage);
-
-        //     const skip = (page - 1) * itemsPerPage;
-        //     const cursor = allFoodsCollection.find().skip(skip).limit(itemsPerPage);
-
-        //     try {
-        //         const result = await cursor.toArray();
-        //         res.send({ totalPages, currentPage: page, data: result });
-        //     } catch (error) {
-        //         console.error('Error fetching foods:', error.message);
-        //         res.status(500).json({ error: 'Internal Server Error' });
-        //     }
-        // });
-
-
-
         app.get('/allFoods', async (req, res) => {
             const page = parseInt(req.query.page) || 1;
             const itemsPerPage = 9;
-            const searchTerm = req.query.search || ''; // Extract search term from query parameters
+            const searchTerm = req.query.search || '';
 
             const totalItems = await allFoodsCollection.countDocuments({
-                food_name: { $regex: new RegExp(searchTerm, 'i') }, // Case-insensitive search
+                food_name: { $regex: new RegExp(searchTerm, 'i') },
             });
             const totalPages = Math.ceil(totalItems / itemsPerPage);
 
             const skip = (page - 1) * itemsPerPage;
             const cursor = allFoodsCollection
-                .find({ food_name: { $regex: new RegExp(searchTerm, 'i') } }) // Filter by food name
+                .find({ food_name: { $regex: new RegExp(searchTerm, 'i') } })
                 .skip(skip)
                 .limit(itemsPerPage);
 
@@ -188,8 +133,6 @@ async function run() {
                 res.status(500).json({ error: 'Internal Server Error' });
             }
         });
-
-
 
 
         app.get('/allFoods/:id', async (req, res) => {
@@ -296,39 +239,9 @@ async function run() {
 
         //top foods start
 
-        // app.post('/addedFoods', async (req, res) => {
-        //     const addedFoods = req.body;
-
-        //     await addedFoodsCollection.updateOne(
-        //         { food_name: addedFoods.food_name },
-        //         { $inc: { count: 1 } },
-        //         { upsert: true }
-        //     );
-
-        //     const result = await addedFoodsCollection.insertOne(addedFoods);
-        //     res.send(result);
-        // });
-
-        // app.get('/api/top-selling-foods', async (req, res) => {
-        //     try {
-        //         const topSellingFoods = await addedFoodsCollection
-        //             .find()
-        //             .sort({ count: -1 })
-        //             .limit(6)
-        //             .toArray();
-
-        //         res.json({ topSellingFoods });
-        //     } catch (error) {
-        //         console.error('Error fetching top-selling foods:', error.message);
-        //         res.status(500).json({ error: 'Internal Server Error' });
-        //     }
-        // });
-
-
         app.post('/addedFoods', async (req, res) => {
             const addedFoods = req.body;
 
-            // Increment count for the purchased food
             await addedFoodsCollection.updateOne(
                 { food_name: addedFoods.food_name },
                 { $inc: { count: 1 } },
@@ -347,13 +260,11 @@ async function run() {
                     .limit(6)
                     .toArray();
 
-                // Extract relevant information for the top-selling foods
                 const formattedTopSellingFoods = topSellingFoods.map(food => ({
                     food_name: food.food_name,
                     image_url: food.image_url,
                     category: food.category,
                     price: food.price,
-                    // Add more fields as needed
                 }));
 
                 res.json({ topSellingFoods: formattedTopSellingFoods });
