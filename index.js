@@ -2,6 +2,7 @@ const express = require('express')
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
+// const mongoose = require('mongoose');
 require('dotenv').config();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express()
@@ -51,6 +52,20 @@ const client = new MongoClient(uri, {
         deprecationErrors: true,
     }
 });
+
+
+// Define the schema outside the run function
+// const addedFoodsSchema = new mongoose.Schema({
+//     food_name: String,
+//     image_url: String,
+//     category: String,
+//     price: Number,
+//     count: { type: Number, default: 0 },
+// });
+
+
+
+
 
 async function run() {
     try {
@@ -205,8 +220,6 @@ async function run() {
         })
 
 
-
-
         //myAdded foods to main database/allFoodsCollection
         app.post('/myFoods', async (req, res) => {
             const myFoods = req.body;
@@ -214,6 +227,79 @@ async function run() {
             const result = await allFoodsCollection.insertOne(myFoods);
             res.send(result);
         })
+
+
+        //top foods start
+
+        // app.post('/addedFoods', async (req, res) => {
+        //     const addedFoods = req.body;
+
+        //     await addedFoodsCollection.updateOne(
+        //         { food_name: addedFoods.food_name },
+        //         { $inc: { count: 1 } },
+        //         { upsert: true }
+        //     );
+
+        //     const result = await addedFoodsCollection.insertOne(addedFoods);
+        //     res.send(result);
+        // });
+
+        // app.get('/api/top-selling-foods', async (req, res) => {
+        //     try {
+        //         const topSellingFoods = await addedFoodsCollection
+        //             .find()
+        //             .sort({ count: -1 })
+        //             .limit(6)
+        //             .toArray();
+
+        //         res.json({ topSellingFoods });
+        //     } catch (error) {
+        //         console.error('Error fetching top-selling foods:', error.message);
+        //         res.status(500).json({ error: 'Internal Server Error' });
+        //     }
+        // });
+
+
+        app.post('/addedFoods', async (req, res) => {
+            const addedFoods = req.body;
+
+            // Increment count for the purchased food
+            await addedFoodsCollection.updateOne(
+                { food_name: addedFoods.food_name },
+                { $inc: { count: 1 } },
+                { upsert: true }
+            );
+
+            const result = await addedFoodsCollection.insertOne(addedFoods);
+            res.send(result);
+        });
+
+        app.get('/api/top-selling-foods', async (req, res) => {
+            try {
+                const topSellingFoods = await addedFoodsCollection
+                    .find()
+                    .sort({ count: -1 })
+                    .limit(6)
+                    .toArray();
+
+                // Extract relevant information for the top-selling foods
+                const formattedTopSellingFoods = topSellingFoods.map(food => ({
+                    food_name: food.food_name,
+                    image_url: food.image_url,
+                    category: food.category,
+                    price: food.price,
+                    // Add more fields as needed
+                }));
+
+                res.json({ topSellingFoods: formattedTopSellingFoods });
+            } catch (error) {
+                console.error('Error fetching top-selling foods:', error.message);
+                res.status(500).json({ error: 'Internal Server Error' });
+            }
+        });
+
+        // top foods end
+
 
 
 
